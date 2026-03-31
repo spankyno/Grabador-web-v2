@@ -6,12 +6,11 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import type { Database } from "./database.types";
 
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -26,7 +25,6 @@ export async function createServerSupabaseClient() {
             );
           } catch {
             // En Server Components solo se puede leer, no escribir cookies
-            // El middleware se encarga de refrescar la sesión
           }
         },
       },
@@ -35,15 +33,15 @@ export async function createServerSupabaseClient() {
 }
 
 // Cliente con service role key — SOLO para uso en servidor/worker
-// NUNCA importar este cliente en componentes cliente
 export function createServiceRoleClient() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { createClient } = require("@supabase/supabase-js");
 
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY no está definida");
   }
 
-  return createClient<Database>(
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
