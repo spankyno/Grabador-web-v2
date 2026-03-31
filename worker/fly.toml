@@ -1,0 +1,53 @@
+# =============================================
+# worker/fly.toml
+# Configuración para deploy del worker en Fly.io
+# Deploy: fly deploy --config worker/fly.toml
+# =============================================
+
+app = "grabador-web-worker"
+primary_region = "mad"  # Madrid — más cercano a Supabase EU
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "3001"
+  NODE_ENV = "production"
+
+# Los secretos se añaden con:
+# fly secrets set NEXT_PUBLIC_SUPABASE_URL=... --app grabador-web-worker
+# fly secrets set SUPABASE_SERVICE_ROLE_KEY=... --app grabador-web-worker
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 3001
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0  # Escala a cero cuando no hay jobs
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "requests"
+    hard_limit = 10    # Máximo 10 vídeos procesando en paralelo
+    soft_limit = 5
+
+  [[services.http_checks]]
+    interval = "30s"
+    timeout = "10s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/health"
+
+[resources]
+  # FFmpeg necesita CPU y RAM decentes
+  # Ajustar según volumen esperado
+  [resources.compute]
+    cpu_kind = "shared"
+    cpus = 2
+    memory_mb = 2048
