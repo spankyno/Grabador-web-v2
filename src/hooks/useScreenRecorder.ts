@@ -297,10 +297,11 @@ export function useScreenRecorder(options: RecorderOptions = {}) {
         const sizeMB = blob.size / (1024 * 1024);
 
         // Crear registro en la base de datos con status "raw"
+        // El cast `as const` evita que TypeScript amplíe "raw" a string
         const { error: dbError } = await supabase.from("recordings").insert({
           id: recordingId,
           user_id: session.user.id,
-          status: "raw",
+          status: "raw" as const,
           duration_seconds: durationSeconds,
           size_bytes: blob.size,
           title: `Grabación ${new Date().toLocaleString("es-ES")}`,
