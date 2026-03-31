@@ -23,14 +23,34 @@ export default function RegisterPage() {
     setLoading(true); setError(null);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
 
-    if (error) setError(error.message);
-    else setDone(true);
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+
+    // Si la confirmación de email está desactivada en Supabase,
+    // la sesión viene directa en el signUp — redirigir inmediatamente.
+    if (data.session) {
+      window.location.href = "/recorder";
+      return;
+    }
+
+    // Si está activada la confirmación, el usuario existe pero sin sesión.
+    // Intentamos login de todas formas — si falla es porque necesita confirmar.
+    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+    if (!loginError) {
+      window.location.href = "/recorder";
+    } else {
+      // Necesita confirmar email — mostrar mensaje
+      setDone(true);
+    }
     setLoading(false);
   };
 
