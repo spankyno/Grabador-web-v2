@@ -11,6 +11,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { uploadWithTus, uploadDirect } from "@/lib/tus-upload";
 import type { RecorderState, RecorderOptions } from "@/types";
+import { QUALITY_PRESETS } from "@/types";
 
 // Umbrales por defecto para activar modo resumable
 const DEFAULT_RESUMABLE_THRESHOLD_MINUTES = 8;
