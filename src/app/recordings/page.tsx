@@ -40,6 +40,8 @@ export default function RecordingsPage() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchRecordings = useCallback(async () => {
     try {
@@ -69,12 +71,39 @@ export default function RecordingsPage() {
     return () => clearInterval(interval);
   }, [fetchRecordings, recordings]);
 
+  const handleRetry = async (id: string) => {
+    setRetrying(id);
+    try {
+      const res = await fetch(`/api/recordings/${id}/retry`, { method: "POST" });
+      if (!res.ok) throw new Error("Error al reintentar");
+      await fetchRecordings();
+    } catch {
+      alert("No se pudo reintentar. Comprueba las variables de entorno QSTASH_TOKEN y WORKER_ENDPOINT en Vercel.");
+    } finally {
+      setRetrying(null);
+    }
+  };
+
   const handleDownload = async (rec: Recording) => {
     const type = rec.processed_url ? "processed" : "raw";
     const res = await fetch(`/api/signed-url?id=${rec.id}&type=${type}`);
     if (!res.ok) return alert("No se pudo generar el enlace de descarga");
     const { url } = await res.json();
     window.open(url, "_blank");
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Eliminar esta grabación? Esta acción no se puede deshacer.")) return;
+    setDeleting(id);
+    try {
+      const res = await fetch(`/api/recordings/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Error al eliminar");
+      setRecordings(prev => prev.filter(r => r.id !== id));
+    } catch {
+      alert("No se pudo eliminar la grabación.");
+    } finally {
+      setDeleting(null);
+    }
   };
 
   return (
@@ -150,14 +179,50 @@ export default function RecordingsPage() {
                       ↓ Descargar MP4
                     </button>
                   )}
-                  {(rec.status === "raw" || rec.status === "error") && (
-                    <button
-                      className="btn-secondary sm"
-                      onClick={() => handleDownload(rec)}
-                    >
-                      ↓ WebM original
-                    </button>
+                  {rec.status === "error" && (
+                    <>
+                      <button
+                        className="btn-retry sm"
+                        onClick={() => handleRetry(rec.id)}
+                        disabled={retrying === rec.id}
+                      >
+                        {retrying === rec.id ? "…" : "↺ Reintentar"}
+                      </button>
+                      {rec.raw_path && (
+                        <button
+                          className="btn-secondary sm"
+                          onClick={() => handleDownload(rec)}
+                        >
+                          ↓ WebM
+                        </button>
+                      )}
+                    </>
                   )}
+                  {rec.status === "raw" && (
+                    <>
+                      <button
+                        className="btn-retry sm"
+                        onClick={() => handleRetry(rec.id)}
+                        disabled={retrying === rec.id}
+                      >
+                        {retrying === rec.id ? "…" : "↺ Procesar"}
+                      </button>
+                      <button
+                        className="btn-secondary sm"
+                        onClick={() => handleDownload(rec)}
+                      >
+                        ↓ WebM original
+                      </button>
+                    </>
+                  )}
+                  <button
+                    className="btn-delete sm"
+                    onClick={() => handleDelete(rec.id)}
+                    disabled={deleting === rec.id}
+                    title="Eliminar grabación"
+                  >
+                    {deleting === rec.id ? "…" : "✕"}
+                  </button>
                 </div>
               </div>
             );
@@ -270,6 +335,8 @@ export default function RecordingsPage() {
           padding: 0.5rem 1rem 0.75rem;
           display: flex;
           gap: 0.5rem;
+          align-items: center;
+          min-height: 44px;
         }
 
         .btn-primary {
@@ -302,6 +369,37 @@ export default function RecordingsPage() {
         }
         .btn-secondary:hover { border-color: #374151; color: #e2e8f0; }
         .btn-secondary.sm { padding: 0.4rem 0.75rem; font-size: 0.78rem; }
+        .btn-retry {
+          padding: 0.5rem 1rem;
+          border-radius: 8px;
+          font-size: 0.82rem;
+          font-weight: 600;
+          font-family: inherit;
+          background: rgba(245, 158, 11, 0.1);
+          color: #f59e0b;
+          border: 1.5px solid rgba(245, 158, 11, 0.3);
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .btn-retry:hover:not(:disabled) { background: rgba(245,158,11,0.18); border-color: #f59e0b; }
+        .btn-retry:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-retry.sm { padding: 0.4rem 0.75rem; font-size: 0.78rem; }
+        .btn-delete {
+          padding: 0.35rem 0.6rem;
+          border-radius: 8px;
+          font-size: 0.85rem;
+          font-family: inherit;
+          background: transparent;
+          color: #94a3b8;
+          border: 1.5px solid #2d3748;
+          cursor: pointer;
+          transition: all 0.15s;
+          margin-left: auto;
+          line-height: 1;
+        }
+        .btn-delete:hover:not(:disabled) { color: #f87171; border-color: rgba(248,113,113,0.5); background: rgba(248,113,113,0.08); }
+        .btn-delete:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-delete.sm { padding: 0.35rem 0.55rem; font-size: 0.78rem; }
 
         .empty-state {
           display: flex;
