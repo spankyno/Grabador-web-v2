@@ -311,15 +311,25 @@ export function useScreenRecorder(options: RecorderOptions = {}) {
   const handleUpload = useCallback(
     async (blob: Blob, durationSeconds: number) => {
       try {
+        // MODO INVITADO — no subir nada, ofrecer descarga directa del WebM
+        if (guestMode) {
+          updateState({
+            status: "ready",
+            guestBlob: blob,
+            downloadUrl: URL.createObjectURL(blob),
+            durationSeconds,
+          });
+          return;
+        }
+
         const supabase = createClient();
 
-        // Obtener sesión del usuario
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
+        // Refrescar sesión antes de subir (evita token expirado en grabaciones largas)
+        const { data: refreshData } = await supabase.auth.refreshSession();
+        const session = refreshData?.session
+          ?? (await supabase.auth.getSession()).data.session;
 
-        if (sessionError || !session) {
+        if (!session) {
           updateState({
             status: "error",
             error: "Debes iniciar sesión para guardar grabaciones",
