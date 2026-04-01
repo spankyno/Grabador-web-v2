@@ -23,7 +23,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-RUN npm ci
+RUN npm install
 
 # Código fuente — tipos ya incluidos en src/types.ts
 COPY src ./src
@@ -37,7 +37,7 @@ FROM base AS production
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
 
