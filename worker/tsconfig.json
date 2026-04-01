@@ -8,11 +8,8 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "paths": {
-      "@/types": ["../src/types/index.ts"]
-    }
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*", "../src/types/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

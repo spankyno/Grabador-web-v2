@@ -20,7 +20,7 @@ import { createWriteStream, createReadStream, promises as fs } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { pipeline } from "node:stream/promises";
-import type { ProcessingJob } from "../../src/types";
+import type { ProcessingJob } from "./types";
 
 // Configurar FFmpeg con el binario estático incluido en el paquete
 if (ffmpegStatic) ffmpeg.setFfmpegPath(ffmpegStatic);
