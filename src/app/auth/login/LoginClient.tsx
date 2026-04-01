@@ -1,86 +1,61 @@
 "use client";
 
 // =============================================
-// src/app/auth/register/RegisterClient.tsx
-// Componente cliente — formulario de registro
+// src/app/auth/login/LoginClient.tsx
+// Componente cliente — formulario de inicio de sesión
 // =============================================
 
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
-export default function RegisterClient() {
+export default function LoginClient() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirm) { setError("Las contraseñas no coinciden"); return; }
-    if (password.length < 8) { setError("La contraseña debe tener al menos 8 caracteres"); return; }
     setLoading(true); setError(null);
 
     const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setError(error.message);
+      setError(
+        error.message.includes("Invalid login")
+          ? "Email o contraseña incorrectos"
+          : error.message
+      );
       setLoading(false);
-      return;
-    }
-
-    if (data.session) {
-      window.location.href = "/recorder";
-      return;
-    }
-
-    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-    if (!loginError) {
-      window.location.href = "/recorder";
     } else {
-      setDone(true);
+      window.location.href = "/recorder";
     }
-    setLoading(false);
   };
 
   return (
     <main className="auth-page">
       <div className="auth-card">
         <Link href="/" className="auth-back">← Volver</Link>
-        <h1 className="auth-title">Crear cuenta</h1>
-        <p className="auth-subtitle">Empieza a grabar gratis</p>
+        <h1 className="auth-title">Bienvenido</h1>
+        <p className="auth-subtitle">Inicia sesión en tu cuenta</p>
 
-        {done ? (
-          <div className="auth-done">
-            <div className="done-icon">✉</div>
-            <p>Revisa tu email para confirmar la cuenta</p>
-            <p className="done-hint">Enviado a <strong>{email}</strong></p>
-          </div>
-        ) : (
-          <form onSubmit={handleRegister} className="auth-form">
-            <input type="email" placeholder="Email" value={email}
-              onChange={e => setEmail(e.target.value)} required className="auth-input" autoFocus />
-            <input type="password" placeholder="Contraseña (mín. 8 caracteres)" value={password}
-              onChange={e => setPassword(e.target.value)} required className="auth-input" />
-            <input type="password" placeholder="Confirmar contraseña" value={confirm}
-              onChange={e => setConfirm(e.target.value)} required className="auth-input" />
-            {error && <p className="auth-error">{error}</p>}
-            <button type="submit" className="auth-submit" disabled={loading}>
-              {loading ? <span className="spinner" /> : "Crear cuenta"}
-            </button>
-            <p className="auth-switch">
-              ¿Ya tienes cuenta? <Link href="/auth/login">Inicia sesión</Link>
-            </p>
-          </form>
-        )}
+        <form onSubmit={handleLogin} className="auth-form">
+          <input type="email" placeholder="Email" value={email}
+            onChange={e => setEmail(e.target.value)} required className="auth-input" autoFocus />
+          <input type="password" placeholder="Contraseña" value={password}
+            onChange={e => setPassword(e.target.value)} required className="auth-input" />
+          {error && <p className="auth-error">{error}</p>}
+          <button type="submit" className="auth-submit" disabled={loading}>
+            {loading ? <span className="spinner" /> : "Entrar"}
+          </button>
+          <p className="auth-switch">
+            ¿Sin cuenta? <Link href="/auth/register">Crear una gratis</Link>
+          </p>
+        </form>
       </div>
+
       <style>{`
         .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; background: var(--bg, #06080e); }
         .auth-card { width: 100%; max-width: 380px; background: #0a0d15; border: 1px solid #1a2030; border-radius: 16px; padding: 2.5rem 2rem; display: flex; flex-direction: column; gap: 0.6rem; box-shadow: 0 0 60px rgba(245,158,11,0.04); }
@@ -98,10 +73,6 @@ export default function RegisterClient() {
         .auth-submit:disabled { opacity: 0.5; cursor: not-allowed; }
         .auth-switch { font-size: 0.8rem; color: #6b7280; text-align: center; }
         .auth-switch a { color: var(--accent); text-decoration: none; }
-        .auth-done { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 1.5rem 0; text-align: center; color: #94a3b8; font-size: 0.88rem; }
-        .done-icon { font-size: 2.5rem; }
-        .done-hint { font-size: 0.75rem; color: #6b7280; }
-        .done-hint strong { color: #94a3b8; }
         .spinner { width: 18px; height: 18px; border: 2px solid rgba(0,0,0,0.2); border-top-color: #000; border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>

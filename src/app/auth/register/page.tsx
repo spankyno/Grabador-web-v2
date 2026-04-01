@@ -1,6 +1,6 @@
 // =============================================
 // src/app/auth/register/page.tsx
-// Server Component — solo exporta metadata y renderiza el cliente
+// Server Component — exporta metadata y delega al cliente
 // =============================================
 
 import type { Metadata } from "next";
