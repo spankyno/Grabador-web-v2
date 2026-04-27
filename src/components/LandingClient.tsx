@@ -190,7 +190,7 @@ export default function LandingClient() {
             </div>
             <div className="footer-col">
               <span className="footer-col-title">En la web</span>
-              <a href="https://aitorblog.infinityfreeapp.com" target="_blank" rel="noopener noreferrer" className="footer-link">
+              <a href="https://aitorsanchez.pages.dev/" target="_blank" rel="noopener noreferrer" className="footer-link">
                 Blog
               </a>
               <a href="https://aitorhub.vercel.app" target="_blank" rel="noopener noreferrer" className="footer-link">
